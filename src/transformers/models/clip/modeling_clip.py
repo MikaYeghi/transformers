@@ -218,6 +218,10 @@ class CLIPTextEmbeddings(nn.Module):
             inputs_embeds = self.token_embedding(input_ids)
 
         position_embeddings = self.position_embedding(position_ids)
+        if inputs_embeds.device != position_embeddings:
+            inputs_embeds = inputs_embeds.to(position_embeddings.device)
+        if inputs_embeds.dtype != position_embeddings.dtype:
+            inputs_embeds = inputs_embeds.type(position_embeddings.dtype)
         embeddings = inputs_embeds + position_embeddings
 
         return embeddings
@@ -678,6 +682,7 @@ class CLIPTextTransformer(nn.Module):
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
     ) -> Union[Tuple, BaseModelOutputWithPooling]:
         r"""
         Returns:
@@ -695,7 +700,7 @@ class CLIPTextTransformer(nn.Module):
         input_shape = input_ids.size()
         input_ids = input_ids.view(-1, input_shape[-1])
 
-        hidden_states = self.embeddings(input_ids=input_ids, position_ids=position_ids)
+        hidden_states = self.embeddings(input_ids=input_ids, position_ids=position_ids, inputs_embeds=inputs_embeds)
 
         # CLIP's text model uses causal mask, prepare it here.
         # https://github.com/openai/CLIP/blob/cfcffb90e69f37bf2ff1e988237a0fbe41f33c04/clip/model.py#L324
@@ -783,6 +788,7 @@ class CLIPTextModel(CLIPPreTrainedModel):
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
     ) -> Union[Tuple, BaseModelOutputWithPooling]:
         r"""
         Returns:
@@ -810,6 +816,7 @@ class CLIPTextModel(CLIPPreTrainedModel):
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
+            inputs_embeds=inputs_embeds
         )
 
 
